@@ -1,0 +1,16 @@
+{
+  "name": "Start on Heroku: Python",
+  "description": "A barebones Python app, which can easily be deployed to Heroku.",
+  "image": "heroku/python",
+  "repository": "https://git.heroku.com/woolala-admin-app",
+  "keywords": ["python", "flask" ],
+  "env": {
+    "SECRET_KEY": {
+      "description": "The secret key for the Django application.",
+      "generator": "secret"
+    }
+  },
+  "environments": {
+
+  }
+}
