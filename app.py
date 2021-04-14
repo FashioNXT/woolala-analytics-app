@@ -1,6 +1,6 @@
-# app.py
-from flask import Flask, request, jsonify
-import flask_heroku
+
+from flask import Flask
+
 app = Flask(__name__)
 
 
