@@ -34,8 +34,5 @@ with app.app_context():
     current_app.db = get_mongo_database()
 
 if __name__ == '__main__':
-    # Threaded option to enable multiple instances for multiple user access support
-    #app.register_blueprint(admin_app_page)
-
 
     app.run(threaded=True, port=5000 ,debug=True )
