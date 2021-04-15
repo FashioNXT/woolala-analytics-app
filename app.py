@@ -9,8 +9,6 @@ from database_connection.database_connection import get_mongo_database
 
 template_dir = "frontend/templates"
 app = Flask(__name__, template_folder=template_dir)
-app.secret_key = "super secret key"
-app.register_blueprint(admin_app_page)
 
 
 
@@ -29,11 +27,15 @@ def set_database_config():
         current_app.db_name = config.get('DatabaseSection', 'database.test')
 
 
+app.secret_key = "super secret key"
+app.register_blueprint(admin_app_page)
+with app.app_context():
+    set_database_config()
+    current_app.db = get_mongo_database()
+
 if __name__ == '__main__':
     # Threaded option to enable multiple instances for multiple user access support
     #app.register_blueprint(admin_app_page)
-    with app.app_context():
-        set_database_config()
-        current_app.db = get_mongo_database()
+
 
     app.run(threaded=True, port=5000 ,debug=True )
