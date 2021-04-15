@@ -34,5 +34,5 @@ if __name__ == '__main__':
     with app.app_context():
         set_database_config()
         current_app.db = get_mongo_database()
-    app.register_blueprint(admin_app_page)
+        app.register_blueprint(admin_app_page)
     app.run(threaded=True, port=5000 ,debug=True )
