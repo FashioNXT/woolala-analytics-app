@@ -1,6 +1,9 @@
 pymongo[srv]
 ConfigParser
 flask
+flask-heroku
 gunicorn
 Jinja2
+MarkupSafe
+Werkzeug
 bcrypt
