@@ -1,9 +1,12 @@
-{% extends "layout.html" %}
+{% extends "auth/layout.html" %}
 {% block body %}
+{% if error %}
+         <p><strong>Error:</strong> {{ error }}
+             {% endif %}
 <div class="container">
     <div class="row">
         <div class="col-md-4 col-md-offset-4">
-            <form method="POST" action="{{ url_for('login') }}">
+            <form method="POST" action="{{ url_for('admin_app_page.login') }}">
                 <div class="form-group">
                     <label for="exampleInputEmail">Username</label>
                     <input type="text" class="form-control" name="username" placeholder="Username">
@@ -16,7 +19,7 @@
             </form>
             <br>
             <div>
-                Dont have an account? <a href="{{ url_for('register') }}">Sign up here</a>.
+                Dont have an account? <a href="{{ url_for('admin_app_page.register') }}">Sign up here</a>.
             </div>
         </div>
     </div>

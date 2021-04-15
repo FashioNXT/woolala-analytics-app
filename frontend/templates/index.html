@@ -7,9 +7,10 @@
 
 <img src="index_image.jpg" alt="WELCOME TO WOOLALA APP" style="width:500px;height:600px;">
 
-
-<button onclick="location.href='http://www.example.com'" type="button">
-         www.example.com</button>
+<button onclick="location.href='{{ url_for('admin_app_page.login') }}'" type="button">
+         Login</button>
+<button onclick="location.href='{{ url_for('admin_app_page.register') }}'" type="button">
+         Register</button>
 
 </body>
 </html>

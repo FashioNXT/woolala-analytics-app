@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Page</title>
+    <button onclick="location.href='{{ url_for('admin_app_page.logout') }}'" type="button">
+         Logut</button>
+
+    <table style="width:100%", border="1">
+        {% for item in users %}
+        <tr>
+            <td>{{item}}</td>
+        </tr>
+        {% endfor %}
+</table>
+
+</head>
+<body>
+
+</body>
+</html>
