@@ -2,7 +2,7 @@ pymongo[srv]
 ConfigParser
 flask
 gunicorn
-flask-heroku
 Jinja2
 MarkupSafe
 Werkzeug
+bcrypt
