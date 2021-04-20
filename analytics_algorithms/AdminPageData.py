@@ -1,6 +1,7 @@
 from flask import current_app
 import datetime
 import itertools
+from analytics_algorithms.Recommendation import Recommendation
 
 #TODO : for all users and posts check for their existence and also handle errors
 class AdminPageData:
@@ -13,7 +14,7 @@ class AdminPageData:
         self.users_db = self.db.Users
         self.posts_db = self.db.Posts
 
-    def _delete_post(self,post):
+    def delete_post(self,post):
         postId = post["postID"]
         users_rated = post["usersRated"]
         for userId in users_rated:
@@ -24,7 +25,7 @@ class AdminPageData:
 
         self.posts_db.remove({"postID": postId})
 
-    def _delete_posts(self):
+    def delete_posts(self):
         """
         fucntion to delete users who are marked for deletion from the database
         It deletes user and all post made by the user
@@ -34,7 +35,7 @@ class AdminPageData:
             self._delete_post(post)
 
 
-    def _delete_users(self):
+    def delete_users(self):
         """
         fucntion to delete posts which are marked for deletion from database
         It deletes all post related  inluding ratings given to the post by the user and post from the list of post posted by the user
@@ -82,7 +83,7 @@ class AdminPageData:
 
 
 
-    def _update_users_count_data(self):
+    def update_users_count_data(self):
         """
         update total user count and number of users trend
         """
@@ -105,7 +106,7 @@ class AdminPageData:
         number_of_users_rated = len(post["usersRated"])
         return ((cummulative_rating/2)*(number_of_users_rated/2))
 
-    def _update_top_rated_posts(self):
+    def update_top_rated_posts(self):
         """
         updates the top rated posts data
         top rated post are decided by cummulative ratings and number of users following
@@ -130,7 +131,7 @@ class AdminPageData:
         return 10*number_of_post + 0.5*rated_posts
 
 
-    def _update_most_active_users(self):
+    def update_most_active_users(self):
         """
         update most active users in the applications
         The activeness of user is decided by the number of post it posted , number of post rated , number of followers.
@@ -146,13 +147,33 @@ class AdminPageData:
                              sorted(users_rating_dict.items(), key=lambda item: item[1], reverse=True)}
         # currently picks only top 10 posts
 
-        user_top_10 = dict(itertools.islice(users_rating_dict.items(), 10))
+        user_top_10 = dict(itertools.islice(users_rating_dict.items(), max(10,len(users_rating_dict))))
         return user_top_10
 
 
-    def _update_users_recommendation(self):
+    def update_users_recommendation(self):
         """
         update the recommendated post seen by user based ratings given by all users, followers of the user and the following list of user
+        The post of users followed by the given user is given max of predicted rating or 4
+        c
         """
-        pass
+        predict_rating = Recommendation.recommender_system()
+        users = self.users_db.find()
+        for user in users:
+            userId = user["userID"]
+            post_rating = predict_rating[userId]
+            following = user["following"]
+            for following_user_id in following:
+                following_user = self.users_db.find_one({"userID":following_user_id})
+                for following_user_post_id in following_user["postIds"]:
+                    post_rating[following_user_post_id] = max(4,post_rating[following_user_post_id])
+
+            post_rating = {key: value for key, value in
+                                 sorted(post_rating.items(), key=lambda item: item[1], reverse=True)}
+
+            top_100_recommendations = dict(itertools.islice(post_rating.items(), max(100,len(post_rating)))).keys()
+
+            self.users_db.update_one({"userID": userId}, {"$set": {"ecommendedPosts":top_100_recommendations}})
+
+
 

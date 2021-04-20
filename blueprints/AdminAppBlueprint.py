@@ -1,7 +1,7 @@
 """
 The admin crm  page Blueprint
 """
-
+from analytics_algorithms.AdminPageData import AdminPageData
 from flask import Blueprint, render_template, url_for, request, session, redirect
 import bcrypt
 from flask import current_app ,flash
@@ -64,12 +64,10 @@ def logout():
 
 @admin_app_page.route('/admin_data')
 def admin_data():
-    users = current_app.db.Users  # user week graph, ,most post users , most rated post , most want to buy post,reported posts
-    users = users.find()
-    users_data = {}
-    user_count = users.count()
+    admin_data = current_app.db.AdminPageData
+    data = admin_data.find()
 
-    return render_template('admin_app/admin_page.html', users=users)
+    return render_template('admin_app/admin_page.html', data=data)
 
 @admin_app_page.route('/delete_user')
 def delete_user(userId):
@@ -96,5 +94,14 @@ def update_admin_data():
         It will update recommendation for users
         It will update data seen by admin on the CRM page
     """
+    AdminPageData.delete_posts()
+    AdminPageData.delete_users()
+    AdminPageData.update_most_active_users()
+    AdminPageData.update_top_rated_posts()
+    AdminPageData.update_users_count_data()
+    AdminPageData.update_users_recommendation()
+    admin_data = current_app.db.AdminPageData
+    data = admin_data.find()
 
+    return render_template('admin_app/admin_page.html', data=data)
 
