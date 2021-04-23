@@ -173,7 +173,9 @@ class AdminPageData:
 
             top_100_recommendations = dict(itertools.islice(post_rating.items(), max(100,len(post_rating)))).keys()
 
-            self.users_db.update_one({"userID": userId}, {"$set": {"ecommendedPosts":top_100_recommendations}})
+            self.users_db.update_one({"userID": userId}, {"$set": {"recommendedPosts":top_100_recommendations}})
+
+
 
 
 

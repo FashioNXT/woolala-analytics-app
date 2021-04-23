@@ -6,8 +6,9 @@
     <button onclick="location.href='{{ url_for('admin_app_page.logout') }}'" type="button">
          Logut</button>
 
+
     <table style="width:100%", border="1">
-        {% for item in users %}
+        {% for item in data %}
         <tr>
             <td>{{item}}</td>
         </tr>
