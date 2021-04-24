@@ -24,37 +24,42 @@ class Recommendation:
         """
         Function to initialise latent feature matrices , bias values and train data
         """
-        postsIds = self.users_db.distinct("userID")
-        userIds = self.posts_db.distinct("postID")
-        self.latent_dimension = max(10,(min(len(postsIds),len(userIds)))/20)
+        userIds = self.users_db.distinct("userID")
+        postsIds = self.posts_db.distinct("postID")
+        self.latent_dimension = int(max(10,(min(len(postsIds),len(userIds)))/20))
         users = self.users_db.find()
-        item_bias = defaultdict(lambda: 0) # a tuple with first value as total rating and second as number of users rated
+        item_bias = defaultdict(lambda: [0,0]) # a tuple with first value as total rating and second as number of users rated
         for user in users:
             user_rated_posts_dict = user["ratedPosts"]
             userId = user["userID"]
-            self.user_latent_matrix[userId] = np.random.uniform(-1 / np.sqrt(self.latent_dimension), 1 / np.sqrt(self.latent_dimension),(1, self.latent_dimension))
+            self.user_latent_vector[userId] = np.random.uniform(-1 / np.sqrt(self.latent_dimension), 1 / np.sqrt(self.latent_dimension),(1, self.latent_dimension))
 
             self.train_data_dict[userId] = user_rated_posts_dict
-            self.user_bias[userId] = sum(user_rated_posts_dict.value())/len(user_rated_posts_dict)
+            self.user_bias[userId] = sum(user_rated_posts_dict.values())/len(user_rated_posts_dict)
             for postId,rating in user_rated_posts_dict.items():
-                item_bias["postId"][0] = rating
-                item_bias["postId"][1] += 1
+                item_bias[postId][0] = rating
+                item_bias[postId][1] += 1
         for postId in postsIds:
-            self.item_latent_matrix[postId] =  np.random.uniform(-1 / np.sqrt(self.latent_dimension), 1 / np.sqrt(self.latent_dimension),(1, self.latent_dimension))
+            self.item_latent_vecor[postId] =  np.random.uniform(-1 / np.sqrt(self.latent_dimension), 1 / np.sqrt(self.latent_dimension),(1, self.latent_dimension))
             if(item_bias[postId][1]):
                 self.item_bias[postId] = item_bias[postId][0] / item_bias[postId][1]
 
 
 
-    def stochastic_gradient_descent(self,l_rate:float = 0.0001 , r_rate:float = 0.1, max_iter:int = 100):
+    def stochastic_gradient_descent(self,l_rate:float = 0.0001 , r_rate:float = 0.1, max_iter:int = 3):
         for _ in range(max_iter):
+            print(max_iter)
             for userId,ratedPosts in self.train_data_dict.items():
                 for postId,rating in ratedPosts.items():
-                    predicted_rating = self.avg_bias + self.user_bias[userId] + self.item_bias[postId] + np.dot(self.user_latent_vector[userId],self.item_latent_vecor[postId].T)
+                    predicted_rating = self.avg_bias \
+                                       + self.user_bias[userId] \
+                                       + self.item_bias[postId] \
+                                       + np.dot(self.user_latent_vector[userId],
+                                                self.item_latent_vecor[postId].T)
 
                     error = rating - predicted_rating
-                    self.user_latent_vector[userId] = self.user_latent_vector[userId] + l_rate(error*self.user_latent_vector[userId] - 2*r_rate*self.user_latent_vector[userId])
-                    self.item_latent_vecor[postId] = self.item_latent_vecor[postId] + l_rate(error*self.item_latent_vecor[postId] - 2*r_rate*self.item_latent_vecor[postId])
+                    self.user_latent_vector[userId] = self.user_latent_vector[userId] + l_rate*(error*self.user_latent_vector[userId] - 2*r_rate*self.user_latent_vector[userId])
+                    self.item_latent_vecor[postId] = self.item_latent_vecor[postId] + l_rate*(error*self.item_latent_vecor[postId] - 2*r_rate*self.item_latent_vecor[postId])
 
 
 
@@ -64,10 +69,17 @@ class Recommendation:
 
     def recommender_system(self):
         self._initialise_model()
+        print("model Initialised")
+        print(type(self.user_latent_vector))
+        print(type(self.item_latent_vecor))
+        print(type(self.item_bias))
+        print(type(self.user_bias))
+
         self.stochastic_gradient_descent()
+        print("training completed")
         result_dict = {}
-        postsIds = self.users_db.distinct("userID")
-        userIds = self.posts_db.distinct("postID")
+        userIds = self.users_db.distinct("userID")
+        postsIds = self.posts_db.distinct("postID")
         for userId in userIds:
             result_dict[userId] = {}
             for postId in postsIds:

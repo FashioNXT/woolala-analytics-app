@@ -10,9 +10,9 @@ class AdminPageData:
     """
     def __init__(self):
         self.db = current_app.db
-        self.admin_db = self.db.AdminPageData
-        self.users_db = self.db.Users
-        self.posts_db = self.db.Posts
+        self.admin_db = current_app.db.AdminPageData
+        self.users_db = current_app.db.Users
+        self.posts_db = current_app.db.Posts
 
     def delete_post(self,post):
         postId = post["postID"]
@@ -30,6 +30,7 @@ class AdminPageData:
         fucntion to delete users who are marked for deletion from the database
         It deletes user and all post made by the user
         """
+
         posts_to_delete = self.posts_db.find({"status":"delete"})
         for post in posts_to_delete:
             self._delete_post(post)
@@ -157,23 +158,25 @@ class AdminPageData:
         The post of users followed by the given user is given max of predicted rating or 4
         c
         """
-        predict_rating = Recommendation.recommender_system()
+        predict_rating = Recommendation().recommender_system()
+
         users = self.users_db.find()
         for user in users:
             userId = user["userID"]
+
             post_rating = predict_rating[userId]
             following = user["following"]
             for following_user_id in following:
                 following_user = self.users_db.find_one({"userID":following_user_id})
-                for following_user_post_id in following_user["postIds"]:
+                for following_user_post_id in following_user["postIDs"]:
                     post_rating[following_user_post_id] = max(4,post_rating[following_user_post_id])
 
             post_rating = {key: value for key, value in
                                  sorted(post_rating.items(), key=lambda item: item[1], reverse=True)}
 
-            top_100_recommendations = dict(itertools.islice(post_rating.items(), max(100,len(post_rating)))).keys()
+            top_100_recommendations = dict(itertools.islice(post_rating.items(), max(100,len(post_rating))))
 
-            self.users_db.update_one({"userID": userId}, {"$set": {"recommendedPosts":top_100_recommendations}})
+            self.users_db.update_one({"userID": userId}, {"$set": {"recommendedPosts":[*top_100_recommendations]}})
 
 
 
