@@ -7,8 +7,12 @@ def get_mongo_database():
     Function to connect to mongoDB in the current application context
     Returns: the db connection
     """
-    client = MongoClient(current_app.database_url)
-    db = client[current_app.db_name]
-
-    return db
+    current_app.logger.info("Establishing Database Connection")
+    try:
+        client = MongoClient(current_app.database_url)
+        db = client[current_app.db_name]
+        current_app.logger.info("Database Connected")
+        return db
+    except Exception:
+        current_app.logger.exception("message")
 

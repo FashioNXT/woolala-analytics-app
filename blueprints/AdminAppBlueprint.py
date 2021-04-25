@@ -23,6 +23,7 @@ def login():
     POST: takes the user information , validates it and logins user to it's entitled view of data
     """
     error = None
+    current_app.logger.info("herer")
     if request.method == 'POST':
         admins = current_app.db.Admins
         login_user = admins.find_one({'name': request.form['username']})
@@ -52,7 +53,6 @@ def register():
             hashpass = bcrypt.hashpw(request.form['pass'].encode('utf-8'), bcrypt.gensalt())
             entitled = "all"   # can switch this variable
             admins.insert({'name': request.form['username'], 'password': hashpass, 'entitled':entitled})
-            session['username'] = request.form['username']
             return redirect(url_for('index'))
 
         return 'That username already exists!'
@@ -65,24 +65,31 @@ def logout():
 
 @admin_app_page.route('/admin_data')
 def admin_data():
+    if('username' not in session.keys()):
+        return redirect(url_for('index'))
+    
     admin_data = current_app.db.AdminPageData
-    data = admin_data.find()
+    data = admin_data.find_one({"entitled":session["entitled"]})
 
     return render_template('admin_app/admin_page.html', data=data)
 
-@admin_app_page.route('/delete_user')
+@admin_app_page.route('/delete_user<userId>' , methods=['DELETE'])
 def delete_user(userId):
     """
     Function to mark the status of user as deleted . The user will be deleted later in a batch process
     """
+    if ('username' not in session.keys()):
+        return redirect(url_for('index'))
     users = current_app.db.Users
     users.update_one({"userID": userId}, {"$set": {"status": "deleted"}})
 
-@admin_app_page.route('/delete_post')
+@admin_app_page.route('/delete_post<postId>',methods=['DELETE'])
 def delete_post(postId):
     """
     Function to mark the status of post as deleted . The post will be deleted later in a batch process
     """
+    if ('username' not in session.keys()):
+        return redirect(url_for('index'))
     posts = current_app.db.Posts
     posts.update_one({"postID": postId}, {"$set": {"status": "deleted"}})
 
