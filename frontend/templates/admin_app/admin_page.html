@@ -36,6 +36,19 @@
 
     {% set num_column = 5 %}
     <div>
+        <table class="table center table-striped table table-bordered">
+
+            <tr>
+                <th>Update Date</th>
+                <th>Users Count</th>
+            </tr>
+           {% for key, value in data["userCountTrend"].items(): %}
+            <tr>
+                <td>{{key}}</td>
+                <td>{{value}}</td>
+            </tr>
+            {% endfor %}
+        </table>
         <a href = "# {{ key }}">{{ key }}</a>
         {% for key, value in data.items() if key in display_data_attribute %}
             <h3><a name="{{ key }}">{{ key }}</a></h3>
