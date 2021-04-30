@@ -81,7 +81,7 @@ def admin_data():
         admin_data = current_app.db.AdminPageData
         session["entitled"] = entitled
         data = admin_data.find_one({"entitled": session["entitled"]})
-        return render_template('admin_app/admin_page.html', data=data, title='Admin PAge')
+        return render_template('admin_app/admin_page.html', data=data, title='Admin Page')
     except:
         current_app.logger.exception("message")
 
