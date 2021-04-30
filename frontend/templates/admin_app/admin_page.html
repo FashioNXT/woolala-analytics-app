@@ -6,14 +6,63 @@
     <button onclick="location.href='{{ url_for('admin_app_page.logout') }}'" type="button">
          Logut</button>
 
+    <button onclick="location.href='{{ url_for('admin_app_page.update_admin_data') }}'" type="button">
+         UPDATE</button>
+
 
     <table style="width:100%", border="1">
-        {% for item in data %}
+
         <tr>
-            <td>{{item}}</td>
+            <td>"Users Trend"</td>
+            <td>{{data["userCountTrend"]}}</td>
+        </tr>
+        <tr>
+            <td>"Most Popular Posts"</td>
+            <td>{{data["topRatedPost"]}}</td>
+        </tr>
+        <tr>
+            <td>"Most Active Users"</td>
+            <td>{{data["mostActiveUsers"]}}</td>
+        </tr>
+
+
+    </table>
+
+    <table style="width:100%", border="1">
+        <caption>Reported Posts</caption>
+        <tr>
+            <th>PostId</th>
+            <th>Number Of Times Reported</th>
+            <th>Delete</th>
+        </tr>
+        {% for postId,timesReported in data["reportedPosts"].items() %}
+        <tr>
+            <td>{{postId}}</td>
+            <td>{{timesReported}}</td>
+            <td><button onclick="location.href='{{ url_for('admin_app_page.delete_post',postId = postId) }}'" type="button">
+         Delete</button></td>
         </tr>
         {% endfor %}
-</table>
+
+    </table>
+
+    <table style="width:100%", border="1">
+        <caption>Reported Users</caption>
+        <tr>
+            <th>UserId</th>
+            <th>Number Of Times Reported</th>
+            <th>Delete</th>
+        </tr>
+        {% for userId,timesReported in data["reportedUsers"].items() %}
+        <tr>
+            <td>{{userId}}</td>
+            <td>{{timesReported}}</td>
+            <td><button onclick="location.href='{{ url_for('admin_app_page.delete_user',userId = userId) }}'" type="button">
+         Delete</button></td>
+        </tr>
+        {% endfor %}
+
+    </table>
 
 </head>
 <body>
