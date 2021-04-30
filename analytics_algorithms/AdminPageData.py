@@ -2,8 +2,9 @@ from flask import current_app
 import datetime
 import itertools
 from analytics_algorithms.Recommendation import Recommendation
+from collections import defaultdict
+import numpy as np
 
-#TODO : for all users and posts check for their existence and also handle errors
 class AdminPageData:
     """
     class to update admin data and also recommendations for users as a batch process
@@ -13,17 +14,33 @@ class AdminPageData:
         self.admin_db = current_app.db.AdminPageData
         self.users_db = current_app.db.Users
         self.posts_db = current_app.db.Posts
+        self.reported_posts_db = current_app.db.ReportedPosts
 
-    def delete_post(self,post):
+    def _delete_post(self,post):
+        if(not post):
+            return
         postId = post["postID"]
-        users_rated = post["usersRated"]
+        userId = post["userID"]
+        current_app.logger.info("deleting post : %s ", postId)
+        user_posted = self.users_db.find_one({"userID": userId})
+        postIds = user_posted["postIDs"]
+        postIds.remove(postId)
+        self.users_db.update_one({"userID": userId}, {"$set": {"postIDs": postIds}})
+        users_rated = post["ratedBy"]
+
         for userId in users_rated:
             user = self.users_db.find_one({"userID": userId})
-            rated_posts = user["ratedPosts"]
+            rated_posts = np.asarray(user["ratedPosts"])
+            post_ids = rated_posts[:,0].tolist()
+            index = post_ids.index(postId)
+            rated_posts = rated_posts.tolist()
+            del rated_posts[index]
             # there is a faster way for update but doesn't works for free aws mongo
-            self.users_db.update_one({"postID": postId}, {"$set": {"ratedPosts": rated_posts}})
-
+            self.users_db.update_one({"userID": userId}, {"$set": {"ratedPosts": rated_posts}})
+        current_app.logger.info("post deleted : %s ", postId)
         self.posts_db.remove({"postID": postId})
+        self.reported_posts_db.delete_many({"postID": postId})
+
 
     def delete_posts(self):
         """
@@ -36,6 +53,7 @@ class AdminPageData:
             self._delete_post(post)
 
 
+
     def delete_users(self):
         """
         fucntion to delete posts which are marked for deletion from database
@@ -44,41 +62,52 @@ class AdminPageData:
         users_to_delete = self.users_db.find({"status":"delete"})
         for user in users_to_delete:
             userId = user["userID"]
-
+            current_app.logger.info("deleting user : %s ", userId)
             #remove the user from the followers list of its following users
             following_Ids = user["following"]
             for following_user_id in following_Ids:
+                current_app.logger.info("removing %s user from follower list of user %s  ", userId ,following_user_id)
                 following_user = self.users_db.find_one({"userID":following_user_id})
                 follower_list = following_user["followers"]
-                #check
-                follower_list.remove(userId)
+                if(userId in follower_list):
+                    follower_list.remove(userId)
                 self.users_db.update_one({"userID": following_user_id}, {"$set": {"followers": follower_list}})
 
             #remove the user from the following list of users it follows
             followers_Ids = user["followers"]
             for follower_user_id in followers_Ids:
+                current_app.logger.info("removing %s user from following list of user %s ", userId,
+                                        follower_user_id)
                 follower_user = self.users_db.find_one({"userID":follower_user_id})
                 following_list = follower_user["following"]
-                #check
-                following_list.remove(userId)
+                if (userId in following_list):
+                    following_list.remove(userId)
                 self.users_db.update_one({"userID": follower_user_id}, {"$set": {"following": following_list}})
 
             #remove all my posts
             users_posts_ids = user["postIDs"]
             for user_post_id in users_posts_ids:
+                current_app.logger.info("removing %s post  of user %s  ", user_post_id,userId)
                 post = self.posts_db.find_one({"postID": user_post_id})
                 self._delete_post(post)
 
-            #reduce ratings of all posts I rated
+            #reduce ratings of all posts User rated
             posts_rated = user["ratedPosts"]
-            for postId,rating in posts_rated.items():
+            for postId,rating in posts_rated:
+                current_app.logger.info("changing %s post  rated by user %s  ", postId, userId)
                 post = self.posts_db.find_one({"postID": postId})
-                users_rated = post["usersRated"]
-                users_rated.remove(userId)
-                cumulative_rating = post["cumulativeRating"] - rating
-                self.posts_db.update_one({"postID": postId}, {"$set": {"cumulativeRating": cumulative_rating,"usersRated":users_rated}})
+                if(not post ):
+                    continue
+                users_rated = post["ratedBy"]
+                cumulative_rating = post["cumulativeRating"]
+                if(userId in users_rated):
+                    users_rated.remove(userId)
+                    cumulative_rating -= int(rating)
+                self.posts_db.update_one({"postID": postId}, {"$set": {"cumulativeRating": cumulative_rating,"ratedBy":users_rated}})
             #finally delete the users data
-            self.posts_db.remove({"userID": userId})
+            self.users_db.remove({"userID": userId})
+            current_app.logger.info("deleted user : %s ", userId)
+            self.reported_posts_db.delete_many({"postUserID": userId})
 
 
 
@@ -88,13 +117,15 @@ class AdminPageData:
         """
         update total user count and number of users trend
         """
-        users = self.users_db.find()
+        users = self.users_db.find({"status":"active"})
         total_current_users = users.count()
         #insert present data# sort the dict and remove the last one
         admin_data = self.admin_db.find_one({"entitled":"all"})
         user_trend_count = admin_data["userCountTrend"]
         curr_date = datetime.datetime.now().strftime("%Y-%m-%d")
-        del user_trend_count[min(user_trend_count.keys())]
+        min_key = min(user_trend_count.keys())
+        if(len(user_trend_count)>=1):
+            del user_trend_count[min(user_trend_count.keys())]
         user_trend_count[str(curr_date)] = total_current_users
         self.admin_db.update_one({"entitled": "all"}, {"$set": {"userCountTrend":user_trend_count}})
 
@@ -104,7 +135,7 @@ class AdminPageData:
         Currently used formula = (cummulative rating)/2 * (number of users rated)/2
         """
         cummulative_rating = post["cumulativeRating"]
-        number_of_users_rated = len(post["usersRated"])
+        number_of_users_rated = len(post["ratedBy"])
         return ((cummulative_rating/2)*(number_of_users_rated/2))
 
     def update_top_rated_posts(self):
@@ -113,6 +144,7 @@ class AdminPageData:
         top rated post are decided by cummulative ratings and number of users following
         #top rated post is cummulative*numberofusers/4 . select top 50
         """
+        current_app.logger.info("Updating top rated posts  ")
         posts = self.posts_db.find()
         posts_rating_dict = {}
         for post in posts:
@@ -123,7 +155,31 @@ class AdminPageData:
         #currently picks only top 10 posts
 
         pos_top_10 = dict(itertools.islice(posts_rating_dict.items(), 10))
-        return pos_top_10
+        self.admin_db.update_one({"entitled": "all"}, {"$set": {"topRatedPost":[*pos_top_10]}})
+
+    def update_reported_posts_and_users(self):
+        """
+        updates the more than 3 times reported posts data
+
+        """
+        current_app.logger.info("Updating  reported posts  ")
+        reported_posts = self.reported_posts_db.find({})
+        users_times_reported_dict = defaultdict(lambda: 0)
+        posts_times_reported_dict = defaultdict(lambda: 0)
+        for reported_post in reported_posts:
+            userId = reported_post["postUserID"]
+            postId = reported_post["postID"]
+            users_times_reported_dict[userId] += 1
+            posts_times_reported_dict[postId] += 1
+
+        users_times_reported_dict = {key: value for key, value in
+                             sorted(users_times_reported_dict.items(), key=lambda item: item[1], reverse=True)}
+
+        posts_times_reported_dict = {key: value for key, value in
+                                     sorted(posts_times_reported_dict.items(), key=lambda item: item[1], reverse=True)}
+
+        self.admin_db.update_one({"entitled": "all"}, {"$set": {"reportedPosts": posts_times_reported_dict,"reportedUsers":users_times_reported_dict}})
+
 
 
     def get_user_value(self,user):
@@ -138,6 +194,7 @@ class AdminPageData:
         The activeness of user is decided by the number of post it posted , number of post rated , number of followers.
         #from post data get user id weight 10 and rated users 1 for per ratings
         """
+        current_app.logger.info("Updating  most active users  ")
         users = self.users_db.find()
         users_rating_dict = {}
         for user in users:
@@ -149,7 +206,7 @@ class AdminPageData:
         # currently picks only top 10 posts
 
         user_top_10 = dict(itertools.islice(users_rating_dict.items(), max(10,len(users_rating_dict))))
-        return user_top_10
+        self.admin_db.update_one({"entitled": "all"}, {"$set": {"mostActiveUsers":[*user_top_10]}})
 
 
     def update_users_recommendation(self):
@@ -163,20 +220,21 @@ class AdminPageData:
         users = self.users_db.find()
         for user in users:
             userId = user["userID"]
-
+            current_app.logger.info("Updating recommended post for user %s",userId)
             post_rating = predict_rating[userId]
             following = user["following"]
             for following_user_id in following:
                 following_user = self.users_db.find_one({"userID":following_user_id})
-                for following_user_post_id in following_user["postIDs"]:
-                    post_rating[following_user_post_id] = max(4,post_rating[following_user_post_id])
+                if(following_user):
+                    for following_user_post_id in following_user["postIDs"]:
+                        post_rating[following_user_post_id] = max(4,post_rating[following_user_post_id])
 
             post_rating = {key: value for key, value in
                                  sorted(post_rating.items(), key=lambda item: item[1], reverse=True)}
 
-            top_100_recommendations = dict(itertools.islice(post_rating.items(), max(100,len(post_rating))))
+            top_10_recommendations = dict(itertools.islice(post_rating.items(), max(10,len(post_rating))))
 
-            self.users_db.update_one({"userID": userId}, {"$set": {"recommendedPosts":[*top_100_recommendations]}})
+            self.users_db.update_one({"userID": userId}, {"$set": {"recommendedPosts":[*top_10_recommendations]}})
 
 
 

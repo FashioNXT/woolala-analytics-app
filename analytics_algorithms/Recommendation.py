@@ -30,12 +30,18 @@ class Recommendation:
         users = self.users_db.find()
         item_bias = defaultdict(lambda: [0,0]) # a tuple with first value as total rating and second as number of users rated
         for user in users:
-            user_rated_posts_dict = user["ratedPosts"]
+
+            user_rated_posts_list = user["ratedPosts"]
+            user_rated_posts_dict = {}
+            for postId,rating in user_rated_posts_dict:
+                user_rated_posts_dict[postId] = rating
             userId = user["userID"]
             self.user_latent_vector[userId] = np.random.uniform(-1 / np.sqrt(self.latent_dimension), 1 / np.sqrt(self.latent_dimension),(1, self.latent_dimension))
 
             self.train_data_dict[userId] = user_rated_posts_dict
-            self.user_bias[userId] = sum(user_rated_posts_dict.values())/len(user_rated_posts_dict)
+            if(len(user_rated_posts_dict )):
+                self.user_bias[userId] = sum(user_rated_posts_dict.values())/len(user_rated_posts_dict)
+
             for postId,rating in user_rated_posts_dict.items():
                 item_bias[postId][0] = rating
                 item_bias[postId][1] += 1
@@ -46,9 +52,8 @@ class Recommendation:
 
 
 
-    def stochastic_gradient_descent(self,l_rate:float = 0.0001 , r_rate:float = 0.1, max_iter:int = 3):
+    def stochastic_gradient_descent(self,l_rate:float = 0.0001 , r_rate:float = 0.1, max_iter:int = 1):
         for _ in range(max_iter):
-            print(max_iter)
             for userId,ratedPosts in self.train_data_dict.items():
                 for postId,rating in ratedPosts.items():
                     predicted_rating = self.avg_bias \
@@ -69,14 +74,10 @@ class Recommendation:
 
     def recommender_system(self):
         self._initialise_model()
-        print("model Initialised")
-        print(type(self.user_latent_vector))
-        print(type(self.item_latent_vecor))
-        print(type(self.item_bias))
-        print(type(self.user_bias))
 
+        current_app.logger.info("MF model initialised")
         self.stochastic_gradient_descent()
-        print("training completed")
+        current_app.logger.info("MF model training complete")
         result_dict = {}
         userIds = self.users_db.distinct("userID")
         postsIds = self.posts_db.distinct("postID")

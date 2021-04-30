@@ -1,16 +1,15 @@
 function deleteItem(button) {
-    
+
     var url = null; 
     var deleteId = $(button).attr('name');
     if ( $(button).attr('id') == 'reportedPosts'){
-        url = "delete_post/" + deleteId;
+        url = "delete-post/" + deleteId;
     } else if ( $(button).attr('id') == 'reportedUsers' ) {
-        url = "delete_user/" + deleteId;
+        url = "delete-user/" + deleteId;
     }
-    console.log(url)
 
     $.ajax( url , {
-        type: 'DELETE',  // http method
+        type: 'PUT',
         success: function (data, status, xhr) {
             $(button).prop("disabled",true);
 
@@ -34,19 +33,3 @@ function bottomFunction() {
     }, "slow");
 
 }
-
-// function scrollToAnchor(anchor){
-
-//     var id = $(anhor).attr('href');
-//     $('html,body').animate({scrollTop: $(id).offset().top}, 500);
-//     // $('html,body').animate({
-//     //     scrollTop: tag.offset().top
-//     // },'slow');
-// }
-
-// $(".a[href^=#]").on('click', function(event) { 
-//     event.preventDefault(); 
-//     var name = $(this).attr('href'); 
-//     var target = $('a[name="' + name.substring(1) + '"]'); 
-//     $('html,body').animate({ scrollTop: $(target).offset().top }, 'slow'); 
-// })

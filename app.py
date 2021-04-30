@@ -4,12 +4,10 @@ The main application file . The application uses several blueprints which are re
 """
 from flask import Flask , render_template, url_for, request, session, redirect
 from blueprints.AdminAppBlueprint import admin_app_page
-import bcrypt
 import os
 from flask import g, current_app
 import configparser
 from database_connection.DatabaseConnection import get_mongo_database
-import datetime
 
 import logging
 
