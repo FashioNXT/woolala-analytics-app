@@ -81,15 +81,12 @@ def admin_data():
         admin_data = current_app.db.AdminPageData
         session["entitled"] = entitled
         data = admin_data.find_one({"entitled": session["entitled"]})
-        return render_template('admin_app/admin_page.html', data=data)
+        return render_template('admin_app/admin_page.html', data=data, title='Admin PAge')
     except:
         current_app.logger.exception("message")
 
 
-
-
-
-@admin_app_page.route('/delete-user/userId' , methods=['GET'])
+@admin_app_page.route('/delete-user/<userId>' , methods=['PUT'])
 def delete_user(userId):
     """
     Function to mark the status of user as deleted . The user will be deleted later in a batch process
@@ -109,14 +106,15 @@ def delete_user(userId):
         admin_data.update_one({"entitled": "all"}, {"$set": {"reportedUsers": reported_users}})
 
         current_app.logger.info(" User marked for deletion : %s", str(userId))
+        return "User is marked for deletion"
     except:
         current_app.logger.exception("message")
-    # return redirect(url_for('.admin_data'))
-    # add admin page with the row removed
+#     # return redirect(url_for('.admin_data'))
+#     # add admin page with the row removed
 
 
 
-@admin_app_page.route('/delete-post/postId',methods=['GET'])
+@admin_app_page.route('/delete-post/<postId>',methods=['PUT'])
 def delete_post(postId):
     """
     Function to mark the status of post as deleted . The post will be deleted later in a batch process
@@ -136,7 +134,6 @@ def delete_post(postId):
         del reported_posts[postId]
         current_app.db.ReportedPosts.delete_many({"postID":postId})
         admin_data.update_one({"entitled": "all"}, {"$set": {"reportedPosts": reported_posts}})
-
     except:
         current_app.logger.exception("message")
     # return redirect(url_for('.admin_data'))
