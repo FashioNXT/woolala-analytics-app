@@ -68,7 +68,6 @@
                     {% if loop.index is divisibleby num_column or loop.last %}
                 </tr>
                 {% endif %}
-
                 {% endfor %}
             </table>
             {% else %}
@@ -78,14 +77,10 @@
                 <button class="btn btn-secondary" onclick="topFunction()">To Top</button>
                 <button class="btn btn-secondary" onclick="bottomFunction()">To Update</button>
             </div>
-
         </div>
-
         {% endfor %}
-
-
     </div>
-    <!-- Update -->
+    <!-- Update Button -->
     <div class="p-5">
         <button type="button" class="btn btn-outline-primary btn-lg" data-toggle="modal" data-target="#update">
             Update
