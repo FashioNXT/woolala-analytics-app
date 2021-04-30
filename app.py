@@ -14,8 +14,11 @@ import datetime
 import logging
 
 template_dir = "frontend/templates"
+static_dir = "frontend/templates/static"
 
-app = Flask(__name__, template_folder=template_dir)
+app = Flask(__name__, 
+            template_folder=template_dir,
+            static_folder=static_dir)
 
 
 def set_basic_config():
@@ -79,9 +82,10 @@ def index():
     return: the root html file
     """
     try:
-      return render_template('index.html',front_img="frontend/templates/images/index_image.png")
+        return redirect(url_for('admin_app_page.login'))
+
     except:
         current_app.logger.exception("message")
 
 if __name__ == '__main__':
-    app.run(threaded=True, port=5000 ,debug=False )
+    app.run(port=5000 ,debug=False )

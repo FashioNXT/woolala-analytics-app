@@ -7,10 +7,11 @@ import bcrypt
 from flask import current_app ,flash
 
 template_dir = "../frontend/templates/"
+static_dir = "../frontend/templates/static/"
 
 admin_app_page = Blueprint('admin_app_page', __name__,
-                        template_folder=template_dir)
-
+                        template_folder=template_dir,
+                        static_folder=static_dir)
 #TODO restrict access only to logged in users
 
 @admin_app_page.route('/login', methods=['POST', 'GET'])
@@ -23,21 +24,19 @@ def login():
     POST: takes the user information , validates it and logins user to it's entitled view of data
     """
     error = None
-    current_app.logger.info("herer")
     if request.method == 'POST':
         admins = current_app.db.Admins
         login_user = admins.find_one({'name': request.form['username']})
 
         if login_user:
-            if bcrypt.hashpw(request.form['pass'].encode('utf-8'), login_user['password']) == login_user[
-                'password']:
-                session['username'] = request.form['username']
-                flash('You were successfully logged in')
-                return redirect(url_for('.admin_data'))
-
+                if bcrypt.hashpw(request.form['pass'].encode('utf-8'), login_user['password']) == login_user[
+                    'password']:
+                    session['username'] = request.form['username']
+                    session['entitled'] = login_user['entitled']
+                    flash('You were successfully logged in')
+                    return redirect(url_for('.admin_data'))
         error = 'Invalid username or password. Please try again!'
-    return render_template('auth/login.html', error=error)
-
+    return render_template('auth/login.html', error=error, title='Login')
 
 
 @admin_app_page.route('/register', methods=['POST', 'GET'])
@@ -45,6 +44,7 @@ def register():
     """
     Route function to register a new user as admin
     """
+    error =None
     if request.method == 'POST':
         admins = current_app.db.Admins
         existing_admin = admins.find_one({'name': request.form['username']})
@@ -53,46 +53,44 @@ def register():
             hashpass = bcrypt.hashpw(request.form['pass'].encode('utf-8'), bcrypt.gensalt())
             entitled = "all"   # can switch this variable
             admins.insert({'name': request.form['username'], 'password': hashpass, 'entitled':entitled})
-            return redirect(url_for('index'))
-
-        return 'That username already exists!'
-    return render_template('auth/register.html')
+            return redirect(url_for('.login'))
+        error = 'That username already exists!'
+    return render_template('auth/register.html', error=error, title='Register')
 
 @admin_app_page.route('/logout', methods=['POST', 'GET'])
 def logout():
     session.clear()
-    return redirect(url_for('index'))
+    return redirect(url_for('.login'))
 
 @admin_app_page.route('/admin_data')
 def admin_data():
     if('username' not in session.keys()):
-        return redirect(url_for('index'))
+        return redirect(url_for('.login'))
     
     admin_data = current_app.db.AdminPageData
     data = admin_data.find_one({"entitled":session["entitled"]})
 
-    return render_template('admin_app/admin_page.html', data=data)
+    return render_template('admin_app/admin_page.html', data=data, title='Admin Page')
 
-@admin_app_page.route('/delete_user<userId>' , methods=['DELETE'])
+@admin_app_page.route('/delete_user/<userId>' , methods=['DELETE'])
 def delete_user(userId):
     """
     Function to mark the status of user as deleted . The user will be deleted later in a batch process
     """
     if ('username' not in session.keys()):
-        return redirect(url_for('index'))
+        return redirect(url_for('.login'))
     users = current_app.db.Users
     users.update_one({"userID": userId}, {"$set": {"status": "deleted"}})
 
-@admin_app_page.route('/delete_post<postId>',methods=['DELETE'])
+@admin_app_page.route('/delete_post/<postId>',methods=['DELETE'])
 def delete_post(postId):
     """
     Function to mark the status of post as deleted . The post will be deleted later in a batch process
     """
     if ('username' not in session.keys()):
-        return redirect(url_for('index'))
+        return redirect(url_for('.login'))
     posts = current_app.db.Posts
     posts.update_one({"postID": postId}, {"$set": {"status": "deleted"}})
-
 
 @admin_app_page.route('/update_admin_data')
 def update_admin_data():
