@@ -10,6 +10,10 @@
         <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
             <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
                 <li class="nav-item active">
+                    <a class="nav-link" href="#userCountTrend">User Count</a>
+                </li>
+                
+                <li class="nav-item active">
                     <a class="nav-link" href="#topRatedPost">Top Rated Posts</a>
                 </li>
                 <li class="nav-item active">
@@ -19,7 +23,7 @@
                     <a class="nav-link" href="#reportedPosts">Reported Posts</a>
                 </li>
                 <li class="nav-item active">
-                    <a class="nav-link" href="#reportedPosts">Reported Users</a>
+                    <a class="nav-link" href="#reportedUsers">Reported Users</a>
                 </li>
             </ul>
             <button class="btn btn-outline-dark my-2 my-sm-0" type="submit"
@@ -34,7 +38,7 @@
 
 
 {% set names = ({"topRatedPost":"Top Rated Posts", "mostActiveUsers": "Most Active Users",
-"reportedPosts": "Reported Posts", "reportedUsers": "Reported Users"}) %}
+                "reportedPosts": "Reported Posts", "reportedUsers": "Reported Users"}) %}
 
 {% set num_column = 5 %}
 
@@ -42,7 +46,19 @@
     <div class="p-10">
         <div class="p-5">
             <h3><a name="userCountTrend">User Count</a></h3>
-            <img src="{{ url_for('static', filename='user_count.png') }}">
+
+            <table class="table center table-striped table table-bordered">
+            {% for date, count in data['userCountTrend'].items()|sort(attribute='0') %}
+            <tr>
+                <td>{{ date }}</td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <div class="float-right p-10 mr-auto">
+            <button class="btn btn-secondary" onclick="topFunction()">To Top</button>
+            <button class="btn btn-secondary" onclick="bottomFunction()">To Update</button>
+        </div>
         </div>
         {% for key, value in data.items() if key in display_data_attribute %}
         <div class="p-5">
