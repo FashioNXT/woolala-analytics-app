@@ -134,6 +134,7 @@ def delete_post(postId):
         del reported_posts[postId]
         current_app.db.ReportedPosts.delete_many({"postID":postId})
         admin_data.update_one({"entitled": "all"}, {"$set": {"reportedPosts": reported_posts}})
+        return "Post is marked for deletion"
     except:
         current_app.logger.exception("message")
     # return redirect(url_for('.admin_data'))
