@@ -68,6 +68,8 @@ class AdminPageData:
             for following_user_id in following_Ids:
                 current_app.logger.info("removing %s user from follower list of user %s  ", userId ,following_user_id)
                 following_user = self.users_db.find_one({"userID":following_user_id})
+                if(not following_user):
+                    continue
                 follower_list = following_user["followers"]
                 if(userId in follower_list):
                     follower_list.remove(userId)
@@ -79,6 +81,8 @@ class AdminPageData:
                 current_app.logger.info("removing %s user from following list of user %s ", userId,
                                         follower_user_id)
                 follower_user = self.users_db.find_one({"userID":follower_user_id})
+                if(not follower_user):
+                    continue
                 following_list = follower_user["following"]
                 if (userId in following_list):
                     following_list.remove(userId)
@@ -117,6 +121,7 @@ class AdminPageData:
         """
         update total user count and number of users trend
         """
+        current_app.logger.info("Updating users trend  ")
         users = self.users_db.find({"status":"active"})
         total_current_users = users.count()
         #insert present data# sort the dict and remove the last one
@@ -125,7 +130,9 @@ class AdminPageData:
         curr_date = datetime.datetime.now().strftime("%Y-%m-%d")
         min_key = min(user_trend_count.keys())
         if(len(user_trend_count)>=10):
-            del user_trend_count[min(user_trend_count.keys())]
+            keys = list(user_trend_count.keys())
+            sorted(keys, key=lambda x: datetime.datetime.strptime(x, "%Y-%m-%d"))
+            del user_trend_count[keys[0]]
         user_trend_count[str(curr_date)] = total_current_users
         self.admin_db.update_one({"entitled": "all"}, {"$set": {"userCountTrend":user_trend_count}})
 
