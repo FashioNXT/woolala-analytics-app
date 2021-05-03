@@ -198,7 +198,7 @@ class AdminPageData:
         users = self.users_db.find()
         users_rating_dict = {}
         for user in users:
-            userId = user["userID"]
+            userId = user["userName"]
             users_rating_dict[userId] = self.get_user_value(user)
 
         users_rating_dict = {key: value for key, value in
