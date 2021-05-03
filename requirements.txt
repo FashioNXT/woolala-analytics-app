@@ -1,8 +1,10 @@
 pymongo[srv]
 ConfigParser
 flask
-gunicorn
 flask-heroku
+gunicorn
 Jinja2
 MarkupSafe
 Werkzeug
+bcrypt
+numpy

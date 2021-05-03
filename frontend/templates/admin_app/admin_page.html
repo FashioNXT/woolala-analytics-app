@@ -1,0 +1,137 @@
+{% extends "layout.html" %}
+{% block body %}
+<header>
+    <nav class="navbar sticky-top navbar-expand-lg navbar-light bg-light" style="background-color: #474a4d;">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo03"
+            aria-controls="navbarTogglerDemo03" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand" href="#">ChooseNXT</a>
+        <div class="collapse navbar-collapse" id="navbarTogglerDemo03">
+            <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                <li class="nav-item active">
+                    <a class="nav-link" href="#userCountTrend">User Count</a>
+                </li>
+                
+                <li class="nav-item active">
+                    <a class="nav-link" href="#topRatedPost">Top Rated Posts</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="#mostActiveUsers">Most Active Users</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="#reportedPosts">Reported Posts</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="#reportedUsers">Reported Users</a>
+                </li>
+            </ul>
+            <button class="btn btn-outline-dark my-2 my-sm-0" type="submit"
+                onclick="location.href='{{ url_for('admin_app_page.logout') }}'">
+                Logout
+            </button>
+        </div>
+</header>
+{% set display_data_attribute = ['topRatedPost', 'mostActiveUsers', 'reportedPosts', 'reportedUsers'] %}
+
+{% set includes_delete = ['reportedPosts', 'reportedUsers'] %}
+
+
+{% set names = ({"topRatedPost":"Top Rated Posts", "mostActiveUsers": "Most Active Users",
+                "reportedPosts": "Reported Posts", "reportedUsers": "Reported Users"}) %}
+
+{% set num_column = 5 %}
+
+<div class="container">
+    <div class="p-10">
+        <div class="p-5">
+            <h3><a name="userCountTrend">User Count</a></h3>
+
+            <table class="table center table-striped table table-bordered">
+            {% for date, count in data['userCountTrend'].items()|sort(attribute='0') %}
+            <tr>
+                <td>{{ date }}</td>
+                <td>{{ count }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <div class="float-right p-10 mr-auto">
+            <button class="btn btn-secondary" onclick="topFunction()">To Top</button>
+            <button class="btn btn-secondary" onclick="bottomFunction()">To Update</button>
+        </div>
+        </div>
+        {% for key, value in data.items() if key in display_data_attribute %}
+        <div class="p-5">
+            <h3><a name="{{ key }}">{{names[key]}}</a></h3>
+            {% if value %}
+            <table class="table center table-striped table table-bordered">
+                {% for item in value %}
+                {% set remainder = loop.index % num_column %}
+                {% if remainder == 1 or loop.first %}
+                <tr>
+                    {% endif %}
+                    <td>
+                        <div style="float: left; width: 50%;">{{ item }}</div>
+                        {% if key in includes_delete %}
+                        <div style="float: right; width: 50%;">
+                            <button class="btn btn-outline-danger btn-sm" id="{{ key }}" name="{{ item }}"
+                                onclick="deleteItem(this)">
+                                Remove
+                            </button>
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% if loop.index is divisibleby num_column or loop.last %}
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </table>
+            {% else %}
+            <p>No data to show</p>
+            {% endif %}
+            <div class="float-right p-10 mr-auto">
+                <button class="btn btn-secondary" onclick="topFunction()">To Top</button>
+                <button class="btn btn-secondary" onclick="bottomFunction()">To Update</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <!-- Update Button -->
+    <div class="p-5">
+        <button type="button" class="btn btn-outline-primary btn-lg" data-toggle="modal" data-target="#update">
+            Update
+        </button>
+    </div>
+</div>
+</div>
+
+<!-- Update Modal -->
+<div class="modal fade" id="update" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Update</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h3>Selected items will be permanently removed.</h3>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary"
+                    onclick="location.href='{{ url_for('admin_app_page.update_admin_data') }}'">Continue</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/admin_app_page.js') }}"></script>
+<style>
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+</style>
+{% endblock %}
