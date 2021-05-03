@@ -124,7 +124,7 @@ class AdminPageData:
         user_trend_count = admin_data["userCountTrend"]
         curr_date = datetime.datetime.now().strftime("%Y-%m-%d")
         min_key = min(user_trend_count.keys())
-        if(len(user_trend_count)>=1):
+        if(len(user_trend_count)>=10):
             del user_trend_count[min(user_trend_count.keys())]
         user_trend_count[str(curr_date)] = total_current_users
         self.admin_db.update_one({"entitled": "all"}, {"$set": {"userCountTrend":user_trend_count}})
@@ -154,7 +154,7 @@ class AdminPageData:
         posts_rating_dict = {key: value for key, value in sorted(posts_rating_dict.items(), key=lambda item: item[1] , reverse= True)}
         #currently picks only top 10 posts
 
-        pos_top_10 = dict(itertools.islice(posts_rating_dict.items(), 10))
+        pos_top_10 = dict(itertools.islice(posts_rating_dict.items(), min(10,len(posts_rating_dict))))
         self.admin_db.update_one({"entitled": "all"}, {"$set": {"topRatedPost":[*pos_top_10]}})
 
     def update_reported_posts_and_users(self):
@@ -205,7 +205,7 @@ class AdminPageData:
                              sorted(users_rating_dict.items(), key=lambda item: item[1], reverse=True)}
         # currently picks only top 10 posts
 
-        user_top_10 = dict(itertools.islice(users_rating_dict.items(), max(10,len(users_rating_dict))))
+        user_top_10 = dict(itertools.islice(users_rating_dict.items(), min(10,len(users_rating_dict))))
         self.admin_db.update_one({"entitled": "all"}, {"$set": {"mostActiveUsers":[*user_top_10]}})
 
 
