@@ -50,7 +50,7 @@ We are deciding the popularity of a post based on the number of users interactin
 Each post is given a score based on the formula : (cummulative rating)/2 * (number of users rated)/2. Post are then sorted based on this score to decide the popularity of it.
 The formula is defined in get_post_value function in the AdminPageData.py. 
 
-###Recommendation System:
+### Recommendation System:
 We have a build a recommendation system based on the Koren's neighbourhood model of recommendation for items to users which is latent feature based model 
 We are maininting a matrix in which the row depicts users and columns depicts posts. The cell in matrix contains a score (currently decided by ratind given by the user to a post). The post by the users whom a particualar user is following is given a defualt rating of 4 to give more weightage to it before starting the training. The recommendation is made using the predicted rating . The code for recommendation is in analytics_algorithms/recommendation.py file. It used stochastic gradient decent to train the model.
 
