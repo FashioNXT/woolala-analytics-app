@@ -42,15 +42,15 @@ More information about blueprints : https://flask.palletsprojects.com/en/1.1.x/b
 
 ## Analytics and Machine Learning Algorithm 
 Currently we have implements logic to decide the most popular post, most active users and matrix factorization based recommendation systems.
-# User Populrity Logic :
+### User Populrity Logic :
 We are deciding the populrity of the user based on number of post the user is posting and the the number of post a user is rating. Each user is given a score based on the formula : 10*number_of_post + 0.5*rated_posts. We are then sorting users based on this score value to decide the most popular users. The formula is defined in get_user_value function in the AdminPageData.py. 
 
-# Post Populrity Logic:
+### Post Populrity Logic:
 We are deciding the popularity of a post based on the number of users interacting with it . For now we are measuring interaction based on the total ratings and number of users who rated a post.
 Each post is given a score based on the formula : (cummulative rating)/2 * (number of users rated)/2. Post are then sorted based on this score to decide the popularity of it.
 The formula is defined in get_post_value function in the AdminPageData.py. 
 
-# Recommendation System:
+###Recommendation System:
 We have a build a recommendation system based on the Koren's neighbourhood model of recommendation for items to users which is latent feature based model 
 We are maininting a matrix in which the row depicts users and columns depicts posts. The cell in matrix contains a score (currently decided by ratind given by the user to a post). The post by the users whom a particualar user is following is given a defualt rating of 4 to give more weightage to it before starting the training. The recommendation is made using the predicted rating . The code for recommendation is in analytics_algorithms/recommendation.py file. It used stochastic gradient decent to train the model.
 
